@@ -9,7 +9,17 @@
   },
   "devDependencies": {},
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "build-kefir": "cd tests/kefirjs && npx webpack",
+    "build-bacon": "cd tests/baconjs && npx webpack",
+    "build-most": "cd tests/most && npx webpack",
+    "build-rxjs": "cd tests/rxjs && npx webpack",
+    "build-ember": "cd tests/ember && ember build --output-path=../../public/tests/ember",
+    "watch-kefir": "cd tests/kefirjs && npx webpack --watch",
+    "watch-bacon": "cd tests/baconjs && npx webpack --watch",
+    "watch-most": "cd tests/most && npx webpack --watch",
+    "watch-rxjs": "cd tests/rxjs && npx webpack --watch",
+    "watch-ember": "cd tests/ember && ember build --output-path=../../public/tests/ember --watch"
   },
   "author": "",
   "license": "MIT"
