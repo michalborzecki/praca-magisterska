@@ -1,9 +1,14 @@
+const performance = require('perf_hooks').performance;
+const fetch = require('node-fetch');
+
+let serverLocation = '';
+
 function fetchTestsConfig() {
-  return fetch('/tests_config').then(res => res.json());
+  return fetch(serverLocation + '/tests_config').then(res => res.json());
 }
 
 function sendTestsResults(results) {
-  return fetch('/tests_result', {
+  return fetch(serverLocation + '/tests_result', {
     method: 'post',
     headers: {
       'Content-Type': 'application/json'
@@ -85,14 +90,16 @@ function performTests(libraryName, testsFunctions) {
           library: libraryName,
           results,
         });
-      })
-      .then(() => {
-        var input = document.createElement('input');
-        input.type = 'hidden';
-        input.id = 'tests-done';
-        document.body.appendChild(input);
       });
   });
 }
 
-window.performTests = performTests;
+if (typeof window === 'undefined') {
+  global.performance = performance;
+  global.performTests = performTests;
+  const toolName = process.argv[2];
+  serverLocation = 'http://127.0.0.1:4200';
+  var test = require('./tests/' + toolName + '/index');
+}
+
+

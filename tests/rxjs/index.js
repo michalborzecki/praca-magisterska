@@ -1,4 +1,4 @@
-import { Subject, of, combineLatest, subscribe } from 'rxjs';
+import { Subject, of, combineLatest } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 var testsFunctions = {
@@ -60,7 +60,6 @@ function fullyConnectedLayers(n) {
     
     var evalT0 = performance.now();
     lastObs.subscribe((x) => {
-      console.log(x);
       var evalT = performance.now() - evalT0;
       resolve({
         eval: evalT,

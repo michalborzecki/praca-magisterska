@@ -54,23 +54,11 @@ function fullyConnectedLayers(n) {
     );
     
     var evalT0 = performance.now();
-    var i = 0;
     lastObs.subscribe((x) => {
-      i++;
-      if (i >= 2) {
-        var evalT = performance.now() - evalT0;
-        console.log(x);
-        resolve({
-          eval: evalT,
-        });
-      } else {
-        evalT0 = performance.now();
-        bus.push(2);
-        // }, 100);
-      }
-      // resolve({
-      //   eval: evalT,
-      // });
+      var evalT = performance.now() - evalT0;
+      resolve({
+        eval: evalT,
+      });
     });
     bus.push(1);
   });

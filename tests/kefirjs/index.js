@@ -57,23 +57,13 @@ function fullyConnectedLayers(n) {
       prevLayer,
       (...values) => values.reduce((s, x) => s + x)
     );
-    
-    var evalT0;
-    var i = 0;
+    // if (x === 2 * Math.pow(5, 10)) {
+    var evalT0 = performance.now();
     lastObs.onValue((x) => {
-      if (x === 2 * Math.pow(5, 10)) {
-        var evalT = performance.now() - evalT0;
-        console.log(x);
-        resolve({
-          eval: evalT,
-        });
-      } else if (i == 0) {
-        // setTimeout(() => {
-          i++;
-          evalT0 = performance.now();
-          streamEmitter.value(2);
-        // }, 100);
-      }
+      var evalT = performance.now() - evalT0;
+      resolve({
+        eval: evalT,
+      });
     });
     streamEmitter.value(1);
   });
