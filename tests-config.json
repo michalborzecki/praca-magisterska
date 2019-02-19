@@ -1,0 +1,8 @@
+{
+  "tests": {
+    "fullyConnectedLayers": {
+      "size": [5],
+      "repeat": 1
+    }
+  }
+}

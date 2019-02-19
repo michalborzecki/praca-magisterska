@@ -1,0 +1,16 @@
+{
+  "name": "kefirjs-test",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "kefir": "3.8.6",
+    "webpack": "4.28.3"
+  },
+  "devDependencies": {
+    "copy-webpack-plugin": "4.6.0",
+    "webpack-cli": "3.2.1"
+  }
+}
