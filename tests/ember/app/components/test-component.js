@@ -10,7 +10,8 @@ export default Component.extend({
 
   runTests() {
     const testsFunctions = {
-      simpleChain: config => config.size.map(size => () => this.simpleChain(size)),
+      simpleChainCreation: config => config.size.map(size => () => this.simpleChainCreation(size)),
+      simpleChainEval: config => config.size.map(size => () => this.simpleChainEval(size)),
       fullyConnectedLayers: config => config.size.map(size => () => this.fullyConnectedLayers(size)),
       fullyConnectedLayers2x: config => config.size.map(size => () => this.fullyConnectedLayers2x(size)),
       simpleSequence: config => config.size.map(size => () => this.simpleSequence(size)),
@@ -19,16 +20,44 @@ export default Component.extend({
     window.performTests('emberjs', testsFunctions);
   },
 
-  simpleChain(size) {
+  simpleChainCreation(size) {
     return new Promise(resolve => {
       const constructT0 = performance.now();
 
       const times = {}
       const objExtend = {
         cObserver: observer('c' + size, function () {
-          const evalT = performance.now() - times.evalT0;
           resolve({
             construct: times.constructT,
+          });
+        }),
+        init() {
+          this._super(...arguments);
+          this.get('c' + size);
+        }
+      };
+      for (let i = 0; i < size; i++) {
+        objExtend['c' + (i+1)] = computed('c' + i, function () {
+          return this.get('c' + i) + 1;
+        });
+      }
+      const ObjectClass = EmberObject.extend(objExtend);
+
+      ObjectClass.create();
+      times.constructT = performance.now() - constructT0;
+      resolve({
+        construct: times.constructT,
+      });
+    });
+  },
+
+  simpleChainEval(size) {
+    return new Promise(resolve => {
+      const times = {}
+      const objExtend = {
+        cObserver: observer('c' + size, function () {
+          const evalT = performance.now() - times.evalT0;
+          resolve({
             eval: evalT,
           });
         }),
@@ -45,7 +74,6 @@ export default Component.extend({
       const ObjectClass = EmberObject.extend(objExtend);
 
       const obj = ObjectClass.create();
-      times.constructT = performance.now() - constructT0;
       times.evalT0 = performance.now();
       obj.set('c0', 1);
     });
@@ -55,10 +83,11 @@ export default Component.extend({
     return new Promise(resolve => {
       const times = {}
 
-      const levels = 10;
+      const levels = 8;
       const fieldNames = (level) => {
         const names = [];
-        for (let i = 0; i < n; i++) {
+        var nodesNo = Math.floor(n) + ((level-1)/8 < (n % 1) ? 1 : 0);
+        for (let i = 0; i < nodesNo; i++) {
           names.push(`c${level}-${i}`);
         }
         return names;
@@ -90,7 +119,8 @@ export default Component.extend({
       for (var i = 1; i <= levels; i++) {
         let nextLayer = fieldNames(i);
         let prevLayerCopy = prevLayer.slice(0);
-        for (var j = 0; j < n; j++) {
+        var nodesNo = Math.floor(n) + ((i-1)/8 < (n % 1) ? 1 : 0);
+        for (var j = 0; j < nodesNo; j++) {
           objExtend[nextLayer[j]] = computed(...prevLayerCopy, function () {
             return this.sumFields(prevLayerCopy);
           });
@@ -110,10 +140,11 @@ export default Component.extend({
     return new Promise(resolve => {
       const times = {}
 
-      const levels = 10;
+      const levels = 8;
       const fieldNames = (level) => {
         const names = [];
-        for (let i = 0; i < n; i++) {
+        var nodesNo = Math.floor(n) + ((level-1)/8 < (n % 1) ? 1 : 0);
+        for (let i = 0; i < nodesNo; i++) {
           names.push(`c${level}-${i}`);
         }
         return names;
@@ -128,13 +159,15 @@ export default Component.extend({
           if (!co) {
             return;
           }
-          if (co === Math.pow(n, 10) && !this.get('secondTry')) {
+          const pow = Math.pow(Math.floor(n) + 1, (n % 1) * 8) * Math.pow(Math.floor(n), 8 * (1 - (n % 1)));
+          if (co === pow && !this.get('secondTry')) {
             this.set('secondTry', true);
             next(() => {
               this.set('c0', 2);
               this.notifyPropertyChange(`c${levels}-0`);
+              // this.notifyPropertyChange(`c${levels}-1`);
             });
-          } else if (co === 2 * Math.pow(n, 10)) {
+          } else if (co === 2 * pow) {
             const evalT = performance.now() - times.evalT0;
             resolve({
               eval: evalT,
@@ -155,7 +188,8 @@ export default Component.extend({
       for (var i = 1; i <= levels; i++) {
         let nextLayer = fieldNames(i);
         let prevLayerCopy = prevLayer.slice(0);
-        for (var j = 0; j < n; j++) {
+        var nodesNo = Math.floor(n) + ((i-1)/8 < (n % 1) ? 1 : 0);
+        for (var j = 0; j < nodesNo; j++) {
           objExtend[nextLayer[j]] = computed(...prevLayerCopy, function () {
             return this.sumFields(prevLayerCopy);
           });
@@ -215,7 +249,7 @@ export default Component.extend({
 
       const fieldNames = (level) => {
         const names = [];
-        for (let i = 0; i < Math.pow(3, level); i++) {
+        for (let i = 0; i < Math.pow(2, level); i++) {
           names.push(`c${level}-${i}`);
         }
         return names;
@@ -225,7 +259,6 @@ export default Component.extend({
         init() {
           this._super(...arguments);
           const names = fieldNames(n);
-          this.get(names[0]);
           names.forEach(name => this.get(name));
         },
       };
@@ -234,7 +267,7 @@ export default Component.extend({
       for (var i = 1; i <= n; i++) {
         let nextLayer = fieldNames(i);
         for (var j = 0; j < nextLayer.length; j++) {
-          var prevIndex = Math.floor(j / 3);
+          var prevIndex = Math.floor(j / 2);
           const prevName = prevLayer[prevIndex];
           objExtend[nextLayer[j]] = computed(prevName, function () {
             return this.get(prevName);
@@ -245,7 +278,7 @@ export default Component.extend({
       for (i = 0; i < prevLayer.length; i++) {
         objExtend[prevLayer[i] + 'Obs'] = observer(prevLayer[i], function () {
           this.incrementProperty('counter');
-          if (this.get('counter') === Math.pow(3, n)) {
+          if (this.get('counter') === Math.pow(2, n)) {
             var evalT = performance.now() - times.evalT0;
             resolve({
               eval: evalT,

@@ -3,7 +3,8 @@ import { create, event } from 'most-subject';
 import { newDefaultScheduler } from '@most/scheduler'
 
 var testsFunctions = {
-  simpleChain: config => config.size.map(size => () => simpleChain(size)),
+  simpleChainCreation: config => config.size.map(size => () => simpleChainCreation(size)),
+  simpleChainEval: config => config.size.map(size => () => simpleChainEval(size)),
   fullyConnectedLayers: config => config.size.map(size => () => fullyConnectedLayers(size)),
   fullyConnectedLayers2x: config => config.size.map(size => () => fullyConnectedLayers2x(size)),
   simpleSequence: config => config.size.map(size => () => simpleSequence(size)),
@@ -12,7 +13,7 @@ var testsFunctions = {
 
 performTests('most', testsFunctions);
 
-function simpleChain(n) {
+function simpleChainCreation(n) {
   return new Promise(resolve => {
     var constructT0 = performance.now();
 
@@ -25,12 +26,31 @@ function simpleChain(n) {
     }
 
     var constructT = performance.now() - constructT0;
+
+    var subscribe = () => {};
+    runEffects(tap(subscribe, obs), scheduler);
+
+    resolve({
+      construct: constructT,
+    });
+  })
+}
+
+function simpleChainEval(n) {
+  return new Promise(resolve => {
+    var scheduler = newDefaultScheduler();
+    var [ sink, stream ] = create();
+    
+    var obs = stream;
+    for (var i = 0; i < n; i++) {
+      obs = map(x => x + 1, obs);
+    }
+
     var evalT0 = performance.now();
 
     var subscribe = (x) => {
       var evalT = performance.now() - evalT0;
       resolve({
-        construct: constructT,
         eval: evalT,
       });
     };
@@ -48,9 +68,10 @@ function fullyConnectedLayers(n) {
     var obs = stream;
 
     var prevLayer = [obs];
-    for (var i = 0; i < 10; i++) {
+    for (var i = 0; i < 8; i++) {
       var nextLayer = [];
-      for (var j = 0; j < n; j++) {
+      var nodesNo = Math.floor(n) + (i/8 < (n % 1) ? 1 : 0);
+      for (var j = 0; j < nodesNo; j++) {
         nextLayer.push(combineArray(
           (...values) => values.reduce((s, x) => s + x),
           prevLayer
@@ -84,9 +105,10 @@ function fullyConnectedLayers2x(n) {
     var obs = stream;
 
     var prevLayer = [obs];
-    for (var i = 0; i < 10; i++) {
+    for (var i = 0; i < 8; i++) {
       var nextLayer = [];
-      for (var j = 0; j < n; j++) {
+      var nodesNo = Math.floor(n) + (i/8 < (n % 1) ? 1 : 0);
+      for (var j = 0; j < nodesNo; j++) {
         nextLayer.push(combineArray(
           (...values) => values.reduce((s, x) => s + x),
           prevLayer
@@ -101,11 +123,12 @@ function fullyConnectedLayers2x(n) {
     
     var evalT0 = performance.now();
     var secondTry = false;
+    const pow = Math.pow(Math.floor(n) + 1, (n % 1) * 8) * Math.pow(Math.floor(n), 8 * (1 - (n % 1)));
     var subscribe = (x) => {
-      if (x === Math.pow(n, 10) && !secondTry) {
+      if (x === pow && !secondTry) {
         secondTry = true;
         sink.event(0, 2);
-      } else if (x === 2 * Math.pow(n, 10)) {
+      } else if (x === 2 * pow) {
         var evalT = performance.now() - evalT0;
         resolve({
           eval: evalT,
@@ -156,7 +179,7 @@ function simpleTree(n) {
     for (var i = 0; i < n; i++) {
       var nextLayer = [];
       for (var j = 0; j < prevLayer.length; j++) {
-        for (var k = 0; k < 3; k++) {
+        for (var k = 0; k < 2; k++) {
           nextLayer.push(map(x => x, prevLayer[j]));
         }
       }
@@ -168,7 +191,7 @@ function simpleTree(n) {
     for (var i = 0; i < prevLayer.length; i++) {
       runEffects(tap(() => {
         counter++;
-        if (counter === Math.pow(3, n)) {
+        if (counter === Math.pow(2, n)) {
           var evalT = performance.now() - evalT0;
           resolve({
             eval: evalT,
